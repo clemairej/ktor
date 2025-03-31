@@ -4,13 +4,14 @@
 
 plugins {
     id("ktorbuild.project.library")
+    id("kotlinx-serialization")
 }
 
 kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":ktor-server:ktor-server-core"))
-            api(libs.yamlkt.serialization)
+            api(libs.kaml.serialization)
         }
     }
 }

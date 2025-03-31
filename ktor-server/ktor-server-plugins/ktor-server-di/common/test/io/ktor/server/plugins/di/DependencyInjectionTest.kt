@@ -13,6 +13,7 @@ import io.ktor.server.testing.*
 import io.ktor.test.dispatcher.runTestWithRealTime
 import io.ktor.util.reflect.*
 import kotlinx.coroutines.test.TestResult
+import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 import kotlin.test.*
 
@@ -56,6 +57,23 @@ internal data class BankTeller(
 data class WorkExperience(val jobs: List<PaidWork>)
 
 data class PaidWork(val requiredExperience: WorkExperience)
+
+@Serializable
+data class ConnectionConfig(
+    val url: String,
+    val username: String,
+    val password: String,
+)
+
+interface DataSource {
+    suspend fun connect()
+}
+
+data class DataSourceImpl(val config: ConnectionConfig) : DataSource {
+    override suspend fun connect() {
+        println("Connecting to ${config.url}...")
+    }
+}
 
 class DependencyInjectionTest {
 

@@ -4,10 +4,9 @@
 
 package io.ktor.server.config
 
+import io.ktor.server.application.Application
 import io.ktor.util.reflect.TypeInfo
 import io.ktor.util.reflect.typeInfo
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 
 /**
  * Represents an application config node
@@ -96,9 +95,21 @@ public interface ApplicationConfigValue {
  * Represents an application config value that can be converted to an arbitrary type through
  * a serialization or parsing mechanism.
  */
-public interface SerializableConfigValue: ApplicationConfigValue {
+public interface SerializableConfigValue : ApplicationConfigValue {
     public fun getAs(type: TypeInfo): Any?
 }
+
+/**
+ * Convenience function for accessing properties using serialization.
+ */
+public inline fun <reified E> Application.property(key: String): E =
+    environment.config.property(key).getAs()
+
+/**
+ * Convenience function for accessing properties using serialization.
+ */
+public inline fun <reified E> Application.propertyOrNull(key: String): E? =
+    environment.config.propertyOrNull(key)?.getAs()
 
 /**
  * Converts the application config value to the given type parameter.
