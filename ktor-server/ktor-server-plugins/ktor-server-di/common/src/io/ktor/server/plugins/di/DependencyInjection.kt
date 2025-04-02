@@ -134,6 +134,13 @@ public class DependencyInjectionConfig {
     public var resolution: DependencyResolution = DefaultDependencyResolution
     internal var dependenciesMap: DependencyMap? = null
 
+    /**
+     * Include an additional source for dependencies.
+     *
+     * Sources added this way take precedence in the order of inclusion.
+     *
+     * Declared dependencies have precedence over all sources included this way.
+     */
     public fun include(map: DependencyMap) {
         dependenciesMap = if (dependenciesMap == null) map else dependenciesMap!! + map
     }

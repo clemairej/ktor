@@ -307,6 +307,7 @@ class DependencyInjectionJvmTest {
     @Test
     fun `module parameters from properties`() {
         testConfigFile(
+            FakeLogger::class.qualifiedName!!,
             ::dataSource.qualifiedName,
             modules = listOf(
                 Application::restModule.qualifiedName

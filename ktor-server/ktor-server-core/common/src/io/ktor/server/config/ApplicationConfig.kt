@@ -115,8 +115,10 @@ public inline fun <reified E> Application.propertyOrNull(key: String): E? =
  * Converts the application config value to the given type parameter.
  */
 public inline fun <reified E> ApplicationConfigValue.getAs(): E =
-    if (this !is SerializableConfigValue) {
-        throw IllegalArgumentException("Config value is not serializable")
+    if (E::class == String::class) {
+        getString() as E
+    } else if (this !is SerializableConfigValue) {
+        throw UnsupportedOperationException("Configuration implementation does not support deserialization")
     } else {
         getAs(typeInfo<E>()) as E
     }

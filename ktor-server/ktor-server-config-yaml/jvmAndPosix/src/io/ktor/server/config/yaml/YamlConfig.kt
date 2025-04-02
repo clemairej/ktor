@@ -46,14 +46,12 @@ public expect fun YamlConfig(path: String?): YamlConfig?
  *
  * [Report a problem](https://ktor.io/feedback/?fqname=io.ktor.server.config.yaml.YamlConfig)
  */
-public class YamlConfig private constructor(
-    private val rootNode: YamlMap
-) : ApplicationConfig {
+public class YamlConfig private constructor(yamlMap: YamlMap) : ApplicationConfig {
     internal companion object {
         internal fun from(yaml: YamlMap): YamlConfig =
             YamlConfig(yaml.swapEnvironmentVariables())
     }
-
+    private val rootNode: YamlMap = yamlMap
     private val format: Yaml = Yaml.default
 
     override fun property(path: String): ApplicationConfigValue {
@@ -67,7 +65,7 @@ public class YamlConfig private constructor(
         }
         val value: YamlNode = yaml[parts.last()] ?: return null
         if (value is YamlNull) return null
-        if (value is YamlScalar && resolveValue(value.content, rootNode) == null) return null
+        if (value is YamlScalar && resolveReference(rootNode, value.content) == null) return null
 
         return YamlNodeConfigValue(path, value)
     }
@@ -110,7 +108,7 @@ public class YamlConfig private constructor(
 
     public override fun toMap(): Map<String, Any?> {
         fun toPrimitive(yaml: YamlNode?): Any? = when (yaml) {
-            is YamlScalar -> resolveValue(yaml.content, rootNode)
+            is YamlScalar -> resolveReference(rootNode, yaml.content)
             is YamlMap -> yaml.entries.entries.associate { (key, value) ->
                 key.content to toPrimitive(value)
             }
@@ -128,7 +126,7 @@ public class YamlConfig private constructor(
     public fun checkEnvironmentVariables() {
         fun check(element: YamlNode?) {
             when (element) {
-                is YamlScalar -> resolveValue(element.content, rootNode)
+                is YamlScalar -> resolveReference(rootNode, element.content)
                 is YamlMap -> element.entries.forEach { entry -> check(entry.value) }
                 is YamlList -> element.items.forEach { check(it) }
                 else -> return
@@ -143,7 +141,7 @@ public class YamlConfig private constructor(
     ) : SerializableConfigValue {
         override fun getString(): String =
             (node as? YamlScalar)?.content?.let { value ->
-                resolveValue(value, rootNode)
+                resolveReference(rootNode, value)
             } ?: throw ApplicationConfigurationException(
                 "Failed to read property value for key as String: \"$key\""
             )
@@ -151,7 +149,7 @@ public class YamlConfig private constructor(
         override fun getList(): List<String> =
             (node as? YamlList)?.items?.let { list ->
                 list.map { element ->
-                    resolveValue(element.yamlScalar.content, rootNode)
+                    resolveReference(rootNode, element.yamlScalar.content)
                         ?: throw ApplicationConfigurationException(
                             "Failed to read element of property key as String: \"$key\""
                         )
@@ -168,21 +166,13 @@ public class YamlConfig private constructor(
 }
 
 private fun YamlMap.swapEnvironmentVariables(): YamlMap {
+    val rootNode = this
+
     fun YamlNode.replace(): YamlNode =
         when (this) {
             is YamlList -> YamlList(items.map { it.replace() }, path)
-            is YamlMap -> YamlMap(
-                entries.map { (key, value) ->
-                    key to value.replace()
-                }.toMap(),
-                path
-            )
-            is YamlScalar -> resolveValue(
-                content,
-                this@swapEnvironmentVariables
-            )?.let { resolved ->
-                YamlScalar(resolved, path)
-            } ?: this
+            is YamlMap -> YamlMap(entries.mapValues { it.value.replace() }, path)
+            is YamlScalar -> resolveReferences(rootNode)
             is YamlNull,
             is YamlTaggedNode -> this
         }
@@ -200,8 +190,13 @@ private fun YamlMap.deepReference(path: String): YamlNode? {
     return value
 }
 
-private fun resolveValue(value: String, root: YamlMap): String? {
-    val isEnvVariable = value.startsWith("\$")
+private fun YamlScalar.resolveReferences(rootNode: YamlMap): YamlNode =
+    resolveReference(rootNode, content)
+        ?.let { YamlScalar(it, path) }
+        ?: YamlNull(path)
+
+private fun resolveReference(rootNode: YamlMap, value: String): String? {
+    val isEnvVariable = value.startsWith("$")
     if (!isEnvVariable) return value
     val keyWithDefault = value.drop(1)
     val separatorIndex = keyWithDefault.indexOf(':')
@@ -211,7 +206,7 @@ private fun resolveValue(value: String, root: YamlMap): String? {
         return getSystemPropertyOrEnvironmentVariable(key) ?: keyWithDefault.substring(separatorIndex + 1)
     }
 
-    val selfReference = root.deepReference(keyWithDefault)
+    val selfReference = rootNode.deepReference(keyWithDefault)
     if (selfReference is YamlScalar) {
         return selfReference.content
     }

@@ -126,9 +126,9 @@ public val DefaultDependencyResolution: DependencyResolution =
             provider,
             external,
         )
-        val map = external + DependencyMapImpl(injector.resolveAll())
 
-        map.asResolver(reflection)
+        DependencyMapImpl(injector.resolveAll(), external)
+            .asResolver(reflection)
     }
 
 /**
@@ -159,9 +159,8 @@ public class ProcessingDependencyResolver(
         resolved.getOrPut(key) {
             if (!visited.add(key)) throw CircularDependencyException(listOf(key))
             try {
-                if (external.contains(key)) return external.get(key)
                 val createFunction = provider.declarations[key]
-                    ?: throw MissingDependencyException(key)
+                    ?: return@getOrPut getExternal(key) ?: throw MissingDependencyException(key)
                 Result.success(createFunction.create(this))
             } catch (cause: CircularDependencyException) {
                 // Always throw when encountering with circular references,
@@ -178,4 +177,11 @@ public class ProcessingDependencyResolver(
                 defaultValue()
             }
         }.getOrThrow() as T
+
+    private fun getExternal(key: DependencyKey): Result<Any>? =
+        if (external.contains(key)) {
+            Result.success(external.get(key))
+        } else {
+            null
+        }
 }

@@ -61,8 +61,8 @@ internal fun Application.bankingModule(
     }
 }
 
-internal fun dataSource(@Property("database") config: ConnectionConfig) =
-    DataSourceImpl(config)
+internal fun dataSource(@Property("database") config: ConnectionConfig, logger: FakeLogger) =
+    DataSourceImpl(config, logger)
 
 internal fun Application.restModule(dataSource: DataSource) {
     routing {

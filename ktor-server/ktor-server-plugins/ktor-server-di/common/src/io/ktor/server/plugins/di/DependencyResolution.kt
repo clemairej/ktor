@@ -67,7 +67,7 @@ public interface MutableDependencyMap : DependencyMap {
          *         the instance creation and reflection capabilities of [DependencyReflection].
          */
         public fun MutableDependencyMap.asResolver(reflection: DependencyReflection): DependencyResolver =
-            object : MutableDependencyMap by this, DependencyResolver {
+            this as? DependencyResolver ?: object : MutableDependencyMap by this, DependencyResolver {
                 override val reflection: DependencyReflection
                     get() = reflection
             }
@@ -99,55 +99,63 @@ public interface DependencyResolver : MutableDependencyMap {
  */
 @Suppress("UNCHECKED_CAST")
 public class DependencyMapImpl(
-    instances: Map<DependencyKey, Result<Any>>
+    instances: Map<DependencyKey, Result<Any>>,
+    private val external: DependencyMap,
 ) : MutableDependencyMap {
     private val map = instances.toMutableMap()
 
     override fun contains(key: DependencyKey): Boolean =
-        map.containsKey(key)
+        map.containsKey(key) || external.contains(key)
 
     override fun <T : Any> get(key: DependencyKey): T =
-        (map[key] ?: throw MissingDependencyException(key)).getOrThrow() as T
+        (map[key] ?: getExternal(key) ?: throw MissingDependencyException(key)).getOrThrow() as T
 
     override fun <T : Any> getOrPut(key: DependencyKey, defaultValue: () -> T): T =
         map.getOrPut(key) { runCatching(defaultValue) }.getOrThrow() as T
+
+    private fun getExternal(key: DependencyKey): Result<Any>? =
+        if (external.contains(key)) {
+            Result.success(external.get(key))
+        } else {
+            null
+        }
 }
 
-public operator fun DependencyMap.plus(right: DependencyMap): DependencyMap {
-    val left = this
-    return object : DependencyMap {
-        override fun contains(key: DependencyKey): Boolean =
-            left.contains(key) || right.contains(key)
-
-        override fun <T : Any> get(key: DependencyKey): T =
-            if (left.contains(key)) {
-                left.get(key)
-            } else {
-                right.get(key)
-            }
+/**
+ * Retrieves the dependency associated with the given key from the dependency map, or returns null if no dependency
+ * is associated with the key.
+ *
+ * @param key the unique key that identifies the dependency to retrieve
+ * @return the dependency instance associated with the given key, or null if the key is not present in the map
+ */
+public fun <T> DependencyMap.getOrNull(key: DependencyKey): T? =
+    if (contains(key)) {
+        get(key)
+    } else {
+        null
     }
-}
 
-public operator fun DependencyMap.plus(right: MutableDependencyMap): MutableDependencyMap {
-    val left = this
-    return object : MutableDependencyMap {
-        override fun contains(key: DependencyKey): Boolean =
-            left.contains(key) || right.contains(key)
+/**
+ * Returns a new map that contains the keys of both.
+ *
+ * Where keys are common, precedence is given to the right-hand argument.
+ */
+public operator fun DependencyMap.plus(right: DependencyMap): DependencyMap =
+    MergedDependencyMap(this, right)
 
-        override fun <T : Any> get(key: DependencyKey): T =
-            if (left.contains(key)) {
-                left.get(key)
-            } else {
-                right.get(key)
-            }
+internal class MergedDependencyMap(
+    private val left: DependencyMap,
+    private val right: DependencyMap,
+) : DependencyMap {
+    override fun contains(key: DependencyKey): Boolean =
+        right.contains(key) || left.contains(key)
 
-        override fun <T : Any> getOrPut(key: DependencyKey, defaultValue: () -> T): T =
-            if (left.contains(key)) {
-                left.get(key)
-            } else {
-                right.getOrPut(key, defaultValue)
-            }
-    }
+    override fun <T : Any> get(key: DependencyKey): T =
+        if (right.contains(key)) {
+            right.get(key)
+        } else {
+            left.get(key)
+        }
 }
 
 /**
