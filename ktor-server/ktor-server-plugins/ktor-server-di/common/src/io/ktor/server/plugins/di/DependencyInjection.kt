@@ -140,6 +140,18 @@ public class DependencyInjectionConfig {
      * Sources added this way take precedence in the order of inclusion.
      *
      * Declared dependencies have precedence over all sources included this way.
+     *
+     * For example:
+     * ```kotlin
+     * install(DI) {
+     *     // Add /dev/null file as baseline fallback
+     *     include(DependencyMapImpl(mapOf(DependencyKey(File::class.typeInfo() to File("/dev/null")))))
+     *     // If File is available in this Koin module, use it instead
+     *     include(KoinDependencies(moduleReference))
+     * }
+     * // This declaration will be used before the included maps
+     * dependencies.provide { File("/opt/output") }
+     * ```
      */
     public fun include(map: DependencyMap) {
         dependenciesMap = if (dependenciesMap == null) map else dependenciesMap!! + map

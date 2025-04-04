@@ -35,6 +35,11 @@ abstract fun interface io.ktor.server.plugins.di/DependencyResolution { // io.kt
 abstract interface io.ktor.server.plugins.di/DependencyMap { // io.ktor.server.plugins.di/DependencyMap|null[0]
     abstract fun <#A1: kotlin/Any> get(io.ktor.server.plugins.di/DependencyKey): #A1 // io.ktor.server.plugins.di/DependencyMap.get|get(io.ktor.server.plugins.di.DependencyKey){0§<kotlin.Any>}[0]
     abstract fun contains(io.ktor.server.plugins.di/DependencyKey): kotlin/Boolean // io.ktor.server.plugins.di/DependencyMap.contains|contains(io.ktor.server.plugins.di.DependencyKey){}[0]
+
+    final object Companion { // io.ktor.server.plugins.di/DependencyMap.Companion|null[0]
+        final val EMPTY // io.ktor.server.plugins.di/DependencyMap.Companion.EMPTY|{}EMPTY[0]
+            final fun <get-EMPTY>(): io.ktor.server.plugins.di/DependencyMap // io.ktor.server.plugins.di/DependencyMap.Companion.EMPTY.<get-EMPTY>|<get-EMPTY>(){}[0]
+    }
 }
 
 abstract interface io.ktor.server.plugins.di/DependencyProvider { // io.ktor.server.plugins.di/DependencyProvider|null[0]
@@ -208,7 +213,7 @@ final class io.ktor.server.plugins.di/DependencyKey { // io.ktor.server.plugins.
 }
 
 final class io.ktor.server.plugins.di/DependencyMapImpl : io.ktor.server.plugins.di/MutableDependencyMap { // io.ktor.server.plugins.di/DependencyMapImpl|null[0]
-    constructor <init>(kotlin.collections/Map<io.ktor.server.plugins.di/DependencyKey, kotlin/Result<kotlin/Any>>, io.ktor.server.plugins.di/DependencyMap) // io.ktor.server.plugins.di/DependencyMapImpl.<init>|<init>(kotlin.collections.Map<io.ktor.server.plugins.di.DependencyKey,kotlin.Result<kotlin.Any>>;io.ktor.server.plugins.di.DependencyMap){}[0]
+    constructor <init>(kotlin.collections/Map<io.ktor.server.plugins.di/DependencyKey, kotlin/Result<kotlin/Any>>, io.ktor.server.plugins.di/DependencyMap = ...) // io.ktor.server.plugins.di/DependencyMapImpl.<init>|<init>(kotlin.collections.Map<io.ktor.server.plugins.di.DependencyKey,kotlin.Result<kotlin.Any>>;io.ktor.server.plugins.di.DependencyMap){}[0]
 
     final fun <#A1: kotlin/Any> get(io.ktor.server.plugins.di/DependencyKey): #A1 // io.ktor.server.plugins.di/DependencyMapImpl.get|get(io.ktor.server.plugins.di.DependencyKey){0§<kotlin.Any>}[0]
     final fun <#A1: kotlin/Any> getOrPut(io.ktor.server.plugins.di/DependencyKey, kotlin/Function0<#A1>): #A1 // io.ktor.server.plugins.di/DependencyMapImpl.getOrPut|getOrPut(io.ktor.server.plugins.di.DependencyKey;kotlin.Function0<0:0>){0§<kotlin.Any>}[0]

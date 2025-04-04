@@ -161,12 +161,18 @@ public final class io/ktor/server/plugins/di/DependencyKeyCovarianceKt {
 }
 
 public abstract interface class io/ktor/server/plugins/di/DependencyMap {
+	public static final field Companion Lio/ktor/server/plugins/di/DependencyMap$Companion;
 	public abstract fun contains (Lio/ktor/server/plugins/di/DependencyKey;)Z
 	public abstract fun get (Lio/ktor/server/plugins/di/DependencyKey;)Ljava/lang/Object;
 }
 
+public final class io/ktor/server/plugins/di/DependencyMap$Companion {
+	public final fun getEMPTY ()Lio/ktor/server/plugins/di/DependencyMap;
+}
+
 public final class io/ktor/server/plugins/di/DependencyMapImpl : io/ktor/server/plugins/di/MutableDependencyMap {
 	public fun <init> (Ljava/util/Map;Lio/ktor/server/plugins/di/DependencyMap;)V
+	public synthetic fun <init> (Ljava/util/Map;Lio/ktor/server/plugins/di/DependencyMap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun contains (Lio/ktor/server/plugins/di/DependencyKey;)Z
 	public fun get (Lio/ktor/server/plugins/di/DependencyKey;)Ljava/lang/Object;
 	public fun getOrPut (Lio/ktor/server/plugins/di/DependencyKey;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;

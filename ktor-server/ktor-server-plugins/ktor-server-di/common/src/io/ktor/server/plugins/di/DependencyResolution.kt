@@ -35,6 +35,24 @@ public fun interface DependencyResolution {
  * A map of object instances.
  */
 public interface DependencyMap {
+    public companion object {
+        /**
+         * A predefined, immutable, and empty implementation of the `DependencyMap` interface.
+         *
+         * This object does not contain any dependencies and will always return `false` when checked
+         * for a dependency's presence using the `contains` method. Attempting to retrieve a dependency
+         * using the `get` method of this object will always throw a `MissingDependencyException`.
+         *
+         * Use this object when a placeholder or default, empty `DependencyMap` is required.
+         */
+        public val EMPTY: DependencyMap = object : DependencyMap {
+            override fun contains(key: DependencyKey): Boolean = false
+            override fun <T : Any> get(key: DependencyKey): T {
+                throw MissingDependencyException(key)
+            }
+        }
+    }
+
     /**
      * Checks if the given dependency key is present in the dependency map.
      *
@@ -92,15 +110,19 @@ public interface DependencyResolver : MutableDependencyMap {
 }
 
 /**
- * Basic implementation of [DependencyResolver] using a backing map.
+ * A default implementation of the [MutableDependencyMap] interface.
  *
- * The map values are of the `Result` type so that we can ignore exceptions in the case of initialization problems for
- * types that are never referenced.
+ * It includes the basic operations by delegating to an internal [MutableMap],
+ * and also supports an external fallback when no key is present.
+ *
+ * @constructor Creates a new instance of [DependencyMapImpl].
+ * @param instances an initial map of dependencies, with keys as [DependencyKey] and values as [Result] wrapping the dependencies.
+ * @param external an optional [DependencyMap] that serves as an external source for dependencies not found in the internal map.
  */
 @Suppress("UNCHECKED_CAST")
 public class DependencyMapImpl(
     instances: Map<DependencyKey, Result<Any>>,
-    private val external: DependencyMap,
+    private val external: DependencyMap = DependencyMap.EMPTY,
 ) : MutableDependencyMap {
     private val map = instances.toMutableMap()
 
